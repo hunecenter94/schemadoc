@@ -49,7 +49,7 @@ public class IdxInfo {
 	/** 컬럼 정보 조회 SQL
 	 * @return TABLE_NAME, INDEX_NAME, COLUMNS
 	 */
-	public static String getIdxInfoSQL(String dbType) {
+	public static String getIdxInfoSQL(String dbType, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
 		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
@@ -78,7 +78,16 @@ public class IdxInfo {
 				.append(" GROUP BY TABLE_NAME, INDEX_NAME, NON_UNIQUE ")
 				.append(" ORDER BY TABLE_NAME, NON_UNIQUE, INDEX_NAME ");
 		} else if(DbTableInfo.PostgreSQL.equals(dbType)) { //PostgreSQL
-			
+			sql	.append(" select ")
+				.append("     tablename, ")
+				.append("     indexname, ")
+				.append("     substring(indexdef FROM '\((.*?)\)') ")
+				.append(" from ")
+				.append("     pg_indexes ")
+				.append(" where ")
+				.append("     schemaname = '").append(dbName).append("' ")
+				.append(" order by ")
+				.append("     tablename ");
 		}
 		
 		System.out.println(sql.toString());
