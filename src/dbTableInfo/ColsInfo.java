@@ -114,7 +114,7 @@ public class ColsInfo {
 	/** 컬럼 정보 조회 SQL
 	 * @return TABLE_NAME, COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NOT NULL, COMMENTS, KEY_TYPE, FK_INFO
 	 */
-	public static String getColsInfoSQL(String dbType) {
+	public static String getColsInfoSQL(String dbType, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
 		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
@@ -184,7 +184,74 @@ public class ColsInfo {
 				.append("	COLS.TABLE_SCHEMA = DATABASE() ")
 				.append(" ORDER BY COLS.TABLE_NAME, COLS.ORDINAL_POSITION ");
 		} else if(DbTableInfo.PostgreSQL.equals(dbType)) { //PostgreSQL
-			
+			sql	.append(" select ")
+				.append("     tb.relname as table_name, ")
+				.append("     col_type.column_name, ")
+				.append("     col_type.udt_name as data_type, ")
+				.append("     col_type.character_maximum_length, ")
+				.append("     case ")
+				.append("         when col_type.is_nullable = 'NO' then 'Yes' ")
+				.append("         when col_type.is_nullable = 'YES' then 'No' ")
+				.append("     end as not_null, ")
+				.append("     col_dc.description, ")
+				.append("     case ")
+				.append("         when const_type.constraint_type = 'PRIMARY KEY' then 'PK' ")
+				.append("         when const_type.constraint_type = 'FOREIGN KEY' then 'FK' ")
+				.append("     end as column_key, ")
+				.append("     case when const_type.constraint_type = 'FOREIGN KEY' then concat(const_type.parent_table, '.', const_type.parent_column) end as fk_info ")
+				.append(" from ")
+				.append("     ( ")
+				.append("         select ")
+				.append("             pc.relname, ")
+				.append("             pc.oid, ")
+				.append("             case ")
+				.append("                 when tb.table_type = 'BASE TABLE' then 'TABLE' ")
+				.append("                 when tb.table_type = 'VIEW' then 'VIEW' ")
+				.append("             end as table_type ")
+				.append("         from ")
+				.append("             pg_catalog.pg_class pc ")
+				.append("             join information_schema."tables" tb ")
+				.append("                 on tb.table_schema = '").append(dbName).append("' ")
+				.append("                 and pc.relname = tb.table_name ")
+				.append("     ) tb ")
+				.append("     left join pg_attribute col ")
+				.append("         on tb.oid = col.attrelid ")
+				.append("     left join pg_description col_dc ")
+				.append("         on col_dc.objsubid <> 0 ")
+				.append("         and tb.oid = col_dc.objoid ")
+				.append("         and col_dc.objoid = col.attrelid ")
+				.append("         and col_dc.objsubid = col.attnum ")
+				.append("     left join information_schema."columns" col_type ")
+				.append("         on col_type.table_schema = '").append(dbName).append("' ")
+				.append("         and col_type.table_name = tb.relname ")
+				.append("         and col_type.column_name = col.attname ")
+				.append("         and col_type.ordinal_position = col.attnum ")
+				.append("     left join ( ")
+				.append("         select ")
+				.append("             tc.constraint_type, ")
+				.append("             tc.table_name AS child_table, ")
+				.append("             kcu.column_name AS child_column, ")
+				.append("             ccu.table_name AS parent_table, ")
+				.append("             ccu.column_name AS parent_column ")
+				.append("         FROM ")
+				.append("             information_schema.table_constraints AS tc ")
+				.append("         JOIN ")
+				.append("             information_schema.key_column_usage AS kcu ")
+				.append("           ON tc.constraint_name = kcu.constraint_name ")
+				.append("           AND tc.table_schema = kcu.table_schema ")
+				.append("         JOIN ")
+				.append("             information_schema.constraint_column_usage AS ccu ")
+				.append("           ON ccu.constraint_name = tc.constraint_name ")
+				.append("           AND ccu.table_schema = tc.table_schema ")
+				.append("         WHERE ")
+				.append("             tc.constraint_type = 'PRIMARY KEY' or tc.constraint_type = 'FOREIGN KEY' ")
+				.append("     ) const_type ")
+				.append("         on const_type.child_table = tb.relname ")
+				.append("         and const_type.child_column = col_type.column_name ")
+				.append(" where ")
+				.append("     col.attstattarget = '-1' ")
+				.append(" order by ")
+				.append("     tb.relname, col.attnum ");
 		}
 		
 		System.out.println(sql.toString());
