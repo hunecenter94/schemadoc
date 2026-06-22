@@ -80,9 +80,9 @@ public class DbTableInfo {
 			return;
 		}
 		
-		List<TableInfo> tableInfoList = getTableInfo(conn, dbType, viewSelect);
-		List<ColsInfo> colsInfoList = getColsInfo(conn, dbType);
-		List<IdxInfo> idxInfoList = getIdxInfo(conn, dbType);
+		List<TableInfo> tableInfoList = getTableInfo(conn, dbType, viewSelect, dbName);
+		List<ColsInfo> colsInfoList = getColsInfo(conn, dbType, dbName);
+		List<IdxInfo> idxInfoList = getIdxInfo(conn, dbType, dbName);
 		Map<String, List<ColsInfo>> colsMap = new HashMap<>();
 		Map<String, List<IdxInfo>> idxMap = new HashMap<>();
 
@@ -486,14 +486,14 @@ public class DbTableInfo {
 		return conn;
 	}
 	
-	private static List<TableInfo> getTableInfo(Connection conn, String dbType, String isSelectView) {
+	private static List<TableInfo> getTableInfo(Connection conn, String dbType, String isSelectView, String dbName) {
 		System.out.println("Start getTableInfo");
 		String[][] data = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
-			ps = conn.prepareStatement(TableInfo.getTableInfoSQL(dbType, isSelectView));
+			ps = conn.prepareStatement(TableInfo.getTableInfoSQL(dbType, isSelectView, dbName));
 			rs = ps.executeQuery();
 			
 			data = getData(rs, 3, conn);
@@ -536,14 +536,14 @@ public class DbTableInfo {
 		return convertTableInfo(data);
 	}
 	
-	private static List<ColsInfo> getColsInfo(Connection conn, String dbType) {
+	private static List<ColsInfo> getColsInfo(Connection conn, String dbType, String dbName) {
 		System.out.println("Start getColsInfo");
 		String[][] data = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
-			ps = conn.prepareStatement(ColsInfo.getColsInfoSQL(dbType));
+			ps = conn.prepareStatement(ColsInfo.getColsInfoSQL(dbType, dbName));
 			rs = ps.executeQuery();
 			
 			data = getData(rs, 8, conn);
@@ -586,14 +586,14 @@ public class DbTableInfo {
 		return convertColsInfo(data);
 	}
 	
-	private static List<IdxInfo> getIdxInfo(Connection conn, String dbType) {
+	private static List<IdxInfo> getIdxInfo(Connection conn, String dbType, String dbName) {
 		System.out.println("Start getIdxInfo");
 		String[][] data = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
-			ps = conn.prepareStatement(IdxInfo.getIdxInfoSQL(dbType));
+			ps = conn.prepareStatement(IdxInfo.getIdxInfoSQL(dbType, dbName));
 			rs = ps.executeQuery();
 			
 			data = getData(rs, 3, conn);
