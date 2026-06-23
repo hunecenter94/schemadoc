@@ -42,7 +42,7 @@ public class DbSchemaSwingApp extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        dbTypeCombo = new JComboBox<>(new String[]{"MySQL", "Oracle", "MariaDB","PostgreSQL"});
+        dbTypeCombo = new JComboBox<>(new String[]{"MySQL", "Oracle", "MariaDB","PostgreSQL","MSSQL","Cubrid","Tibero"});
         hostField = new JTextField("127.0.0.1");
         portField = new JTextField("3306");
         dbNameField = new JTextField();
@@ -62,6 +62,7 @@ public class DbSchemaSwingApp extends JFrame {
 
         //  DB 종류가 Oracle일 때만 접속방식 콤보 활성화
         dbTypeCombo.addActionListener(e -> updateOracleConnTypeVisibility());
+        dbTypeCombo.addActionListener(e -> updateDefaultPort());
         updateOracleConnTypeVisibility(); // 초기 상태 반영
 
         return panel;
@@ -72,6 +73,34 @@ public class DbSchemaSwingApp extends JFrame {
         boolean isOracle = "Oracle".equals(dbTypeCombo.getSelectedItem());
         oracleConnTypeCombo.setEnabled(isOracle);
         oracleConnTypeLabel.setEnabled(isOracle);
+    }
+
+    //  추가: DB 종류 변경 시 기본 Port 값 자동 입력
+    private void updateDefaultPort() {
+        String dbType = (String) dbTypeCombo.getSelectedItem();
+        String defaultPort = "3306";
+        switch (dbType) {
+            case "MySQL":
+            case "MariaDB":
+                defaultPort = "3306";
+                break;
+            case "Oracle":
+                defaultPort = "1521";
+                break;
+            case "PostgreSQL":
+                defaultPort = "5432";
+                break;
+            case "MSSQL":
+                defaultPort = "1433";
+                break;
+            case "Cubrid":
+                defaultPort = "33000";
+                break;
+            case "Tibero":
+                defaultPort = "8629";
+                break;
+        }
+        portField.setText(defaultPort);
     }
 
     //  변경: JLabel을 반환하도록 수정 (Oracle 접속방식 라벨을 따로 컨트롤하기 위함)
@@ -148,6 +177,15 @@ public class DbSchemaSwingApp extends JFrame {
                     } else if("PostgreSQL".equals(dbType)) {
                     	url = "jdbc:postgresql://" + host + ":" + port + "/" + dbName;
                         Class.forName("org.postgresql.Driver");
+                    } else if("MSSQL".equals(dbType)) {
+                    	url = "jdbc:sqlserver://" + host + ":" + port + ";databaseName=" + dbName + ";encrypt=false";
+                        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+                    } else if("Cubrid".equals(dbType)) {
+                    	url = "jdbc:cubrid:" + host + ":" + port + ":" + dbName + ":::";
+                        Class.forName("cubrid.jdbc.driver.CUBRIDDriver");
+                    } else if("Tibero".equals(dbType)) {
+                    	url = "jdbc:tibero:thin:@" + host + ":" + port + ":" + dbName;
+                        Class.forName("com.tmax.tibero.jdbc.TbDriver");
                     }
 
                     Connection conn = DriverManager.getConnection(url, id, pwd);
