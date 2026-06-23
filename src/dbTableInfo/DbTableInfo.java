@@ -53,11 +53,11 @@ public class DbTableInfo {
 	
 	/** 엑셀 파일 데이터 길이 표시 데이터 타입 */
 	private static final String[] VISBLE_LENTH_DATA_TYPE_ARR = {
-		//oracle
+		//Oracle
 		"NVARCHAR2",
 		"CHAR",
 		"VARCHAR2",
-		//mysql, maraiDB
+		//mysql, MaraiDB, PostgeSQL
 		"varchar"
 	};
 	
@@ -73,15 +73,15 @@ public class DbTableInfo {
 	private static final Integer COL_I = 8;
 	/* COL_* 수정 금지 */
 	
-	public static void excelDown(String dbType, String host, String port, String id, String pwd, String dbName, String oracleType, String viewSelect, File excelFile) { 
+	public static void excelDown(String dbType, String host, String port, String id, String pwd, String dbName, String oracleType, String isSelectView, File excelFile) { 
 		
 		Connection conn = getConnection(dbType, host, port, id, pwd, dbName, oracleType);
 		if(conn == null) {
 			return;
 		}
 		
-		List<TableInfo> tableInfoList = getTableInfo(conn, dbType, viewSelect, dbName);
-		List<ColsInfo> colsInfoList = getColsInfo(conn, dbType, dbName);
+		List<TableInfo> tableInfoList = getTableInfo(conn, dbType, isSelectView, dbName);
+		List<ColsInfo> colsInfoList = getColsInfo(conn, dbType, isSelectView, dbName);
 		List<IdxInfo> idxInfoList = getIdxInfo(conn, dbType, dbName);
 		Map<String, List<ColsInfo>> colsMap = new HashMap<>();
 		Map<String, List<IdxInfo>> idxMap = new HashMap<>();
@@ -536,14 +536,14 @@ public class DbTableInfo {
 		return convertTableInfo(data);
 	}
 	
-	private static List<ColsInfo> getColsInfo(Connection conn, String dbType, String dbName) {
+	private static List<ColsInfo> getColsInfo(Connection conn, String dbType, String isSelectView, String dbName) {
 		System.out.println("Start getColsInfo");
 		String[][] data = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		
 		try {
-			ps = conn.prepareStatement(ColsInfo.getColsInfoSQL(dbType, dbName));
+			ps = conn.prepareStatement(ColsInfo.getColsInfoSQL(dbType, isSelectView, dbName));
 			rs = ps.executeQuery();
 			
 			data = getData(rs, 8, conn);
