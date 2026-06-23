@@ -1,15 +1,10 @@
 package dbTableInfo;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -84,9 +79,9 @@ public class DbTableInfo {
 	private static final Integer COL_I = 8;
 	/* COL_* 수정 금지 */
 	
-	public static void excelDown(String dbType, String host, String port, String id, String pwd, String dbName, String oracleType, String isSelectView, File excelFile) { 
+	public static void excelDown(String dbType, String dbVersion, String jarPath, String host, String port, String id, String pwd, String dbName, String oracleType, String isSelectView, File excelFile) { 
 		
-		Connection conn = getConnection(dbType, host, port, id, pwd, dbName, oracleType);
+		Connection conn = getConnection(dbType, dbVersion, jarPath, host, port, id, pwd, dbName, oracleType);
 		if(conn == null) {
 			return;
 		}
@@ -469,43 +464,42 @@ public class DbTableInfo {
 		System.out.println("DbTableInfo Finish.");
 	}
 	
-	/** DB 커넥션 연결 */
-	private static Connection getConnection(String dbType, String host, String port, String id, String pwd, String dbName, String oracleType) {
+	/**
+	 * DB 커넥션 연결 <br>
+	 * dbVersion에 해당하는 메타정보(드라이버 클래스명/URL 템플릿)를 찾아, 사용자가 지정한 jarPath의 jar에서
+	 * 드라이버를 동적으로 로드하여 연결한다. (DriverManager를 사용하지 않고 JdbcDriverLoader를 통해 직접 connect)
+	 *
+	 * @param dbVersion DbVersionInfo에 등록된 버전 키 (예: "19c", "2017 이상")
+	 * @param jarPath   사용자가 지정한 JDBC 드라이버 jar 파일 경로
+	 */
+	private static Connection getConnection(String dbType, String dbVersion, String jarPath, String host, String port, String id, String pwd, String dbName, String oracleType) {
 		Connection conn = null;
-		String dbUrl = null;
-		System.out.println(dbType);
-		try {
-			if(Oracle.equals(dbType)) {
-				Class.forName("oracle.jdbc.driver.OracleDriver");
-				if("SID".equals(oracleType)) {
-					dbUrl = "jdbc:oracle:thin:@"+host+":"+port+":"+dbName;
-				}else {
-					dbUrl = "jdbc:oracle:thin:@"+host+":"+port+"/"+dbName;
-				}
-				
-			} else if (MySQL.equals(dbType) || MariaDB.equals(dbType)) {
-	    	    Class.forName("com.mysql.cj.jdbc.Driver");
-				dbUrl = "jdbc:mysql://"+host+":"+port+"/"+dbName;
-			} else if (PostgreSQL.equals(dbType)) {
-				Class.forName("org.postgresql.Driver");
-				dbUrl = "jdbc:postgresql://"+host+":"+port+"/"+dbName;
-			} else if (MSSQL.equals(dbType)) {
-				Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-				dbUrl = "jdbc:sqlserver://"+host+":"+port+";databaseName="+dbName+";encrypt=false";
-			} else if (Cubrid.equals(dbType)) {
-				Class.forName("cubrid.jdbc.driver.CUBRIDDriver");
-				dbUrl = "jdbc:cubrid:"+host+":"+port+":"+dbName+":::";
-			} else if (Tibero.equals(dbType)) {
-				Class.forName("com.tmax.tibero.jdbc.TbDriver");
-				dbUrl = "jdbc:tibero:thin:@"+host+":"+port+":"+dbName;
-			}
-			
-			conn = DriverManager.getConnection(dbUrl, id, pwd);
-		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
-			System.out.println("DB getConnection Error!!");
+		System.out.println(dbType + " / " + dbVersion);
+
+		DbVersionInfo versionInfo = DbVersionInfo.get(dbType, dbVersion);
+		if(versionInfo == null) {
+			System.out.println("등록되지 않은 DB 종류/버전 조합입니다: " + dbType + " / " + dbVersion);
+			return null;
 		}
-		
+
+		String dbUrl = versionInfo.buildUrl(host, port, dbName);
+
+		// Oracle은 SID/Service Name 접속방식에 따라 구분자(: 또는 /)가 다르므로 필요시 덮어쓴다.
+		if(Oracle.equals(dbType) && oracleType != null) {
+			if("SID".equals(oracleType)) {
+				dbUrl = "jdbc:oracle:thin:@" + host + ":" + port + ":" + dbName;
+			} else {
+				dbUrl = "jdbc:oracle:thin:@" + host + ":" + port + "/" + dbName;
+			}
+		}
+
+		try {
+			conn = JdbcDriverLoader.getConnection(jarPath, versionInfo.driverClassName, dbUrl, id, pwd);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("DB getConnection Error!! (jar=" + jarPath + ", driverClass=" + versionInfo.driverClassName + ", url=" + dbUrl + ")");
+		}
+
 		return conn;
 	}
 	

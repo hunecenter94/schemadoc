@@ -418,8 +418,6 @@ public class ColsInfo {
 				.append(" ORDER BY COLS.TABLE_NAME, COLS.COLUMN_ID ");
 		}
 		
-		System.out.println(sql.toString());
-		
 		return sql.toString();
 	}
 }
