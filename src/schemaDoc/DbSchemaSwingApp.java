@@ -27,7 +27,7 @@ public class DbSchemaSwingApp extends JFrame {
 
     public DbSchemaSwingApp() {
         setTitle("DB → Excel Tool");
-        setSize(600, 480);
+        setSize(600, 520);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
