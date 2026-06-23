@@ -7,6 +7,9 @@ DB 명세서를 엑셀로 출력하기 위한 프로그램
 - Oracle
 - MariaDB
 - PostgreSql
+- MSSQL
+- Cubrid
+- Tibero
 ```
 ### 사용방법
 ```
