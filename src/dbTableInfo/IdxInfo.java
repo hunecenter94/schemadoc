@@ -79,15 +79,15 @@ public class IdxInfo {
 				.append(" ORDER BY TABLE_NAME, NON_UNIQUE, INDEX_NAME ");
 		} else if(DbTableInfo.PostgreSQL.equals(dbType)) { //PostgreSQL
 			sql	.append(" select ")
-				.append("     tablename, ")
-				.append("     indexname, ")
-				.append("     substring(indexdef FROM '\((.*?)\)') ")
+				.append(" 	tablename, ")
+				.append(" 	indexname, ")
+				.append(" 	substring(indexdef from '\\((.*?)\\)') ")
 				.append(" from ")
-				.append("     pg_indexes ")
+				.append(" 	pg_indexes ")
 				.append(" where ")
-				.append("     schemaname = '").append(dbName).append("' ")
+				.append(" 	schemaname = '").append(dbName).append("' ")
 				.append(" order by ")
-				.append("     tablename ");
+				.append(" 	tablename ");
 		}
 		
 		System.out.println(sql.toString());
