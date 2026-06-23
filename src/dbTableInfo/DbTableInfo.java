@@ -34,7 +34,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * DB 명세서 Excel 파일 출력 소스 <br>
- * OracleDB / MariaDB
+ * OracleDB / MariaDB / MySQL / PostgreSQL / MSSQL / Cubrid / Tibero
  */
 public class DbTableInfo {
 	
@@ -43,6 +43,9 @@ public class DbTableInfo {
 	public static final String Oracle = "Oracle";
 	public static final String MySQL = "MySQL";
 	public static final String PostgreSQL = "PostgreSQL";
+	public static final String MSSQL = "MSSQL";
+	public static final String Cubrid = "Cubrid";
+	public static final String Tibero = "Tibero";
 	
 	/** 엑셀 파일 시트  작성 제외 테이블 */
 	private static final String[] NON_WRITE_TABLE_ARR = {
@@ -53,12 +56,20 @@ public class DbTableInfo {
 	
 	/** 엑셀 파일 데이터 길이 표시 데이터 타입 */
 	private static final String[] VISBLE_LENTH_DATA_TYPE_ARR = {
-		//Oracle
+		//Oracle, Tibero
 		"NVARCHAR2",
 		"CHAR",
 		"VARCHAR2",
 		//mysql, MaraiDB, PostgeSQL
-		"varchar"
+		"varchar",
+		//MSSQL
+		"nvarchar",
+		"nchar",
+		"varchar",
+		"char",
+		//Cubrid
+		"VARCHAR",
+		"CHARACTER"
 	};
 	
 	/* COL_* 수정 금지 */
@@ -96,7 +107,7 @@ public class DbTableInfo {
 		Set<String> visbleLengthdataTypeSet = new HashSet<>();
 		if(VISBLE_LENTH_DATA_TYPE_ARR.length > 0) {
 			for(String dataType : VISBLE_LENTH_DATA_TYPE_ARR) {
-				visbleLengthdataTypeSet.add(dataType);
+				visbleLengthdataTypeSet.add(dataType.toUpperCase());
 			}
 		}
 		
@@ -368,7 +379,7 @@ public class DbTableInfo {
 						cell.setCellStyle(dataStyle);
 						
 						cell = row.createCell(COL_F);
-						if(visbleLengthdataTypeSet.contains(colsInfo.getDataTy())) {
+						if(visbleLengthdataTypeSet.contains(colsInfo.getDataTy() == null ? "" : colsInfo.getDataTy().toUpperCase())) {
 							cell.setCellValue(Integer.parseInt(colsInfo.getDataLen()));
 						}
 						cell.setCellStyle(dataStyle);
@@ -475,6 +486,18 @@ public class DbTableInfo {
 			} else if (MySQL.equals(dbType) || MariaDB.equals(dbType)) {
 	    	    Class.forName("com.mysql.cj.jdbc.Driver");
 				dbUrl = "jdbc:mysql://"+host+":"+port+"/"+dbName;
+			} else if (PostgreSQL.equals(dbType)) {
+				Class.forName("org.postgresql.Driver");
+				dbUrl = "jdbc:postgresql://"+host+":"+port+"/"+dbName;
+			} else if (MSSQL.equals(dbType)) {
+				Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+				dbUrl = "jdbc:sqlserver://"+host+":"+port+";databaseName="+dbName+";encrypt=false";
+			} else if (Cubrid.equals(dbType)) {
+				Class.forName("cubrid.jdbc.driver.CUBRIDDriver");
+				dbUrl = "jdbc:cubrid:"+host+":"+port+":"+dbName+":::";
+			} else if (Tibero.equals(dbType)) {
+				Class.forName("com.tmax.tibero.jdbc.TbDriver");
+				dbUrl = "jdbc:tibero:thin:@"+host+":"+port+":"+dbName;
 			}
 			
 			conn = DriverManager.getConnection(dbUrl, id, pwd);
