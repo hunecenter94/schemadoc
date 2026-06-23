@@ -117,6 +117,63 @@ public class TableInfo {
 				.append(" 		on tb_dc.objsubid = 0 and tb.oid = tb_dc.objoid ")
 				.append(" order by ")
 				.append(" 		tb.relname ");
+		} else if(DbTableInfo.MSSQL.equals(dbType)) { // MSSQL
+			sql	.append(" SELECT ")
+				.append("	T.TABLE_NAME, ")
+				.append("	CASE WHEN T.TABLE_TYPE = 'BASE TABLE' THEN 'TABLE' WHEN T.TABLE_TYPE = 'VIEW' THEN 'VIEW' END AS TABLE_TYPE, ")
+				.append("	EP.VALUE AS COMMENTS ")
+				.append(" FROM ")
+				.append("	INFORMATION_SCHEMA.TABLES T ")
+				.append(" LEFT JOIN SYS.TABLES ST ")
+				.append("	ON T.TABLE_NAME = ST.NAME ")
+				.append(" LEFT JOIN SYS.EXTENDED_PROPERTIES EP ")
+				.append("	ON EP.MAJOR_ID = ST.OBJECT_ID ")
+				.append("	AND EP.MINOR_ID = 0 ")
+				.append("	AND EP.NAME = 'MS_Description' ")
+				.append(" WHERE ")
+				.append("	T.TABLE_CATALOG = '").append(dbName).append("' ");
+			
+			if(!"Y".equals(isSelectView)) {
+				sql.append(" AND T.TABLE_TYPE = 'BASE TABLE' ");
+			}
+			
+			sql	.append(" ORDER BY T.TABLE_NAME ");
+		} else if(DbTableInfo.Cubrid.equals(dbType)) { // CUBRID
+			sql	.append(" SELECT ")
+				.append("	C.CLASS_NAME AS TABLE_NAME, ")
+				.append("	CASE WHEN C.CLASS_TYPE = 'CLASS' THEN 'TABLE' WHEN C.CLASS_TYPE = 'VCLASS' THEN 'VIEW' END AS TABLE_TYPE, ")
+				.append("	C.COMMENT AS COMMENTS ")
+				.append(" FROM ")
+				.append("	DB_CLASS C ")
+				.append(" WHERE ")
+				.append("	C.IS_SYSTEM_CLASS = 'NO' ")
+				.append("	AND C.OWNER_NAME = '").append(dbName).append("' ");
+			
+			if(!"Y".equals(isSelectView)) {
+				sql.append(" AND C.CLASS_TYPE = 'CLASS' ");
+			}
+			
+			sql	.append(" ORDER BY C.CLASS_NAME ");
+		} else if(DbTableInfo.Tibero.equals(dbType)) { // TIBERO (Oracle 호환)
+			sql	.append(" SELECT ")
+				.append("	TABS.TABLE_NAME, ")
+				.append("	TABS.TABLE_TYPE, ")
+				.append("	CMTS.COMMENTS ")
+				.append(" FROM ");
+			
+			sql	.append(" ( ")
+				.append("	SELECT TABLE_NAME, 'TABLE' AS TABLE_TYPE FROM USER_TABLES ");
+			
+			if("Y".equals(isSelectView)) {
+				sql	.append("	UNION ALL ")
+					.append("	SELECT VIEW_NAME, 'VIEW' AS TABLE_TYPE FROM USER_VIEWS ");
+			}
+			
+			sql	.append(" ) TABS ");
+			
+			sql	.append(" LEFT JOIN USER_TAB_COMMENTS CMTS ")
+				.append("	ON TABS.TABLE_NAME = CMTS.TABLE_NAME ")
+				.append(" ORDER BY TABS.TABLE_NAME ");
 		}
 		
 		System.out.println(sql.toString());
