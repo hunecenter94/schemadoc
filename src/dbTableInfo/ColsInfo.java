@@ -114,7 +114,7 @@ public class ColsInfo {
 	/** 컬럼 정보 조회 SQL
 	 * @return TABLE_NAME, COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NOT NULL, COMMENTS, KEY_TYPE, FK_INFO
 	 */
-	public static String getColsInfoSQL(String dbType, String dbName) {
+	public static String getColsInfoSQL(String dbType, String isSelectView, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
 		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
