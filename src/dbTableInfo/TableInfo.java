@@ -53,7 +53,7 @@ public class TableInfo {
 	public static String getTableInfoSQL(String dbType, String isSelectView, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
-		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
+		if(DbTableInfo.Oracle.equals(dbType) || DbTableInfo.Tibero.equals(dbType)) {	// ORACLE, TIBERO
 			sql	.append(" SELECT ")
 				.append("	TABS.TABLE_NAME, ")
 				.append("	TABS.TABLE_TYPE, ")
@@ -154,26 +154,6 @@ public class TableInfo {
 			}
 			
 			sql	.append(" ORDER BY C.CLASS_NAME ");
-		} else if(DbTableInfo.Tibero.equals(dbType)) { // TIBERO (Oracle 호환)
-			sql	.append(" SELECT ")
-				.append("	TABS.TABLE_NAME, ")
-				.append("	TABS.TABLE_TYPE, ")
-				.append("	CMTS.COMMENTS ")
-				.append(" FROM ");
-			
-			sql	.append(" ( ")
-				.append("	SELECT TABLE_NAME, 'TABLE' AS TABLE_TYPE FROM USER_TABLES ");
-			
-			if("Y".equals(isSelectView)) {
-				sql	.append("	UNION ALL ")
-					.append("	SELECT VIEW_NAME, 'VIEW' AS TABLE_TYPE FROM USER_VIEWS ");
-			}
-			
-			sql	.append(" ) TABS ");
-			
-			sql	.append(" LEFT JOIN USER_TAB_COMMENTS CMTS ")
-				.append("	ON TABS.TABLE_NAME = CMTS.TABLE_NAME ")
-				.append(" ORDER BY TABS.TABLE_NAME ");
 		}
 		
 		System.out.println(sql.toString());
