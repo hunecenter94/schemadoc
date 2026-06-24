@@ -117,7 +117,7 @@ public class ColsInfo {
 	public static String getColsInfoSQL(String dbType, String isSelectView, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
-		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
+		if(DbTableInfo.Oracle.equals(dbType) || DbTableInfo.Tibero.equals(dbType)) {	// ORACLE, TIBERO
 			sql	.append(" SELECT ")
 				.append("	COLS.TABLE_NAME, ")
 				.append("	COLS.COLUMN_NAME, ")
@@ -377,45 +377,6 @@ public class ColsInfo {
 				.append("	) ")
 				.append("	AND A.ATTR_TYPE = 'INSTANCE' ")
 				.append(" ORDER BY A.CLASS_NAME, A.DEF_ORDER ");
-		} else if(DbTableInfo.Tibero.equals(dbType)) { // TIBERO (Oracle 호환)
-			sql	.append(" SELECT ")
-				.append("	COLS.TABLE_NAME, ")
-				.append("	COLS.COLUMN_NAME, ")
-				.append("	COLS.DATA_TYPE, ")
-				.append("	COLS.DATA_LENGTH, ")
-				.append("	CASE WHEN COLS.NULLABLE = 'N' THEN 'Yes' ELSE 'No' END AS \"NOT NULL\", ")
-				.append("	COL_CMTS.COMMENTS, ")
-				.append("	REF_CONS.KEY_TYPE, ")
-				.append("	REF_CONS.FK_INFO ")
-				.append(" FROM USER_TAB_COLUMNS COLS ")
-				.append(" LEFT JOIN USER_COL_COMMENTS COL_CMTS ")
-				.append("	ON COLS.TABLE_NAME = COL_CMTS.TABLE_NAME ")
-				.append("	AND COLS.COLUMN_NAME = COL_CMTS.COLUMN_NAME ")
-				.append(" LEFT JOIN ( ")
-				.append("	SELECT ")
-				.append("		CONS.TABLE_NAME, ")
-				.append("		CONS_COLS.COLUMN_NAME, ")
-				.append("		CASE ")
-				.append("			WHEN CONS.CONSTRAINT_TYPE = 'P' THEN 'PK' ")
-				.append("			WHEN CONS.CONSTRAINT_TYPE = 'R' THEN 'FK' ")
-				.append("		END AS KEY_TYPE, ")
-				.append("		CASE ")
-				.append("			WHEN CONS.CONSTRAINT_TYPE = 'R' ")
-				.append("			THEN REF_CONS.TABLE_NAME || '.' || REF_COLS.COLUMN_NAME ")
-				.append("		END AS FK_INFO ")
-				.append("	FROM USER_CONSTRAINTS CONS ")
-				.append("	JOIN USER_CONS_COLUMNS CONS_COLS ")
-				.append("		ON CONS.CONSTRAINT_NAME = CONS_COLS.CONSTRAINT_NAME ")
-				.append("	LEFT JOIN USER_CONSTRAINTS REF_CONS ")
-				.append("		ON CONS.R_CONSTRAINT_NAME = REF_CONS.CONSTRAINT_NAME ")
-				.append("	LEFT JOIN USER_CONS_COLUMNS REF_COLS ")
-				.append("		ON REF_CONS.CONSTRAINT_NAME = REF_COLS.CONSTRAINT_NAME ")
-				.append("		AND CONS_COLS.POSITION = REF_COLS.POSITION ")
-				.append("	WHERE CONS.CONSTRAINT_TYPE IN ('P','R') ")
-				.append(" ) REF_CONS ")
-				.append("	ON COLS.TABLE_NAME = REF_CONS.TABLE_NAME ")
-				.append("	AND COLS.COLUMN_NAME = REF_CONS.COLUMN_NAME ")
-				.append(" ORDER BY COLS.TABLE_NAME, COLS.COLUMN_ID ");
 		}
 		
 		return sql.toString();
