@@ -52,7 +52,7 @@ public class IdxInfo {
 	public static String getIdxInfoSQL(String dbType, String dbName) {
 		StringBuilder sql = new StringBuilder();
 		
-		if(DbTableInfo.Oracle.equals(dbType)) {	// ORACLE
+		if(DbTableInfo.Oracle.equals(dbType) || DbTableInfo.Tibero.equals(dbType)) {	// ORACLE, TIBERO
 			sql	.append(" SELECT ")
 				.append("	COLS.TABLE_NAME, ")
 				.append("	COLS.INDEX_NAME, ")
@@ -124,19 +124,6 @@ public class IdxInfo {
 				.append("	) ")
 				.append(" GROUP BY IK.CLASS_NAME, IK.INDEX_NAME ")
 				.append(" ORDER BY IK.CLASS_NAME, IK.INDEX_NAME ");
-		} else if(DbTableInfo.Tibero.equals(dbType)) { // TIBERO (Oracle 호환)
-			sql	.append(" SELECT ")
-				.append("	COLS.TABLE_NAME, ")
-				.append("	COLS.INDEX_NAME, ")
-				.append("	LISTAGG(COLS.COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY COLS.COLUMN_POSITION) AS COLUMNS, ")
-				.append("	INDS.GENERATED ")
-				.append(" FROM ")
-				.append("	USER_IND_COLUMNS COLS ")
-				.append(" LEFT JOIN USER_INDEXES INDS ")
-				.append("	ON COLS.INDEX_NAME = INDS.INDEX_NAME ")
-				.append("	AND COLS.TABLE_NAME = INDS.TABLE_NAME ")
-				.append(" GROUP BY COLS.TABLE_NAME, COLS.INDEX_NAME, INDS.GENERATED ")
-				.append(" ORDER BY COLS.TABLE_NAME, INDS.GENERATED DESC, COLS.INDEX_NAME ");
 		}
 		
 		System.out.println(sql.toString());
